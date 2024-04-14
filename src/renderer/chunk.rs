@@ -1,7 +1,15 @@
-use glam::{U16Vec4, UVec3};
-use wgpu::{Buffer, Device};
-use wgpu::util::DeviceExt;
-use crate::vox::renderer::terrain::TerrainVertex;
+use glam::{
+    U16Vec4,
+    UVec3,
+};
+
+use wgpu::{
+    Buffer,
+    Device,
+    util::DeviceExt,
+};
+
+use crate::renderer::terrain::TerrainVertex;
 
 pub struct ChunkRenderData {
     pub vertex_buffer: Buffer,
@@ -21,7 +29,6 @@ impl ChunkRenderData {
             TerrainVertex::new(UVec3::new(1, 0, 1), U16Vec4::new(255, 0, 0, 1)),
             TerrainVertex::new(UVec3::new(0, 1, 1), U16Vec4::new(255, 0, 0, 1)),
             TerrainVertex::new(UVec3::new(1, 1, 1), U16Vec4::new(255, 0, 0, 1)),
-
             TerrainVertex::new(UVec3::new(0, 0, 3), U16Vec4::new(255, 255, 0, 1)),
             TerrainVertex::new(UVec3::new(1, 0, 3), U16Vec4::new(255, 255, 0, 1)),
             TerrainVertex::new(UVec3::new(0, 1, 3), U16Vec4::new(255, 255, 0, 1)),
@@ -30,7 +37,6 @@ impl ChunkRenderData {
             TerrainVertex::new(UVec3::new(1, 0, 4), U16Vec4::new(255, 255, 0, 1)),
             TerrainVertex::new(UVec3::new(0, 1, 4), U16Vec4::new(255, 255, 0, 1)),
             TerrainVertex::new(UVec3::new(1, 1, 4), U16Vec4::new(255, 255, 0, 1)),
-
             TerrainVertex::new(UVec3::new(3, 0, 0), U16Vec4::new(255, 0, 255, 1)),
             TerrainVertex::new(UVec3::new(4, 0, 0), U16Vec4::new(255, 0, 255, 1)),
             TerrainVertex::new(UVec3::new(3, 1, 0), U16Vec4::new(255, 0, 255, 1)),
@@ -39,7 +45,6 @@ impl ChunkRenderData {
             TerrainVertex::new(UVec3::new(4, 0, 1), U16Vec4::new(255, 0, 255, 1)),
             TerrainVertex::new(UVec3::new(3, 1, 1), U16Vec4::new(255, 0, 255, 1)),
             TerrainVertex::new(UVec3::new(4, 1, 1), U16Vec4::new(255, 0, 255, 1)),
-
             TerrainVertex::new(UVec3::new(0, 3, 0), U16Vec4::new(255, 255, 255, 1)),
             TerrainVertex::new(UVec3::new(1, 3, 0), U16Vec4::new(255, 255, 255, 1)),
             TerrainVertex::new(UVec3::new(0, 4, 0), U16Vec4::new(255, 255, 255, 1)),
@@ -48,7 +53,6 @@ impl ChunkRenderData {
             TerrainVertex::new(UVec3::new(1, 3, 1), U16Vec4::new(255, 255, 255, 1)),
             TerrainVertex::new(UVec3::new(0, 4, 1), U16Vec4::new(255, 255, 255, 1)),
             TerrainVertex::new(UVec3::new(1, 4, 1), U16Vec4::new(255, 255, 255, 1)),
-
         ]);
 
         let mut index_data: Vec<u16> = Vec::from([

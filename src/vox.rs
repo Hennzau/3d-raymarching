@@ -7,8 +7,10 @@ use crate::vox::{
     },
 };
 
-pub mod renderer;
 pub mod camera;
+
+pub mod world;
+pub mod chunk;
 
 pub struct VoxLogic {
     pub camera: Camera,

@@ -29,12 +29,11 @@ use winit::{
 };
 use winit::dpi::LogicalSize;
 
-use crate::vox::{
-    renderer::VoxRenderer,
-    VoxLogic,
-};
+use crate::vox::VoxLogic;
+use crate::renderer::VoxRenderer;
 
 mod vox;
+mod renderer;
 
 async fn build_backend(window: &Window) -> (Instance, Surface, SurfaceConfiguration, Adapter, Device, Queue) {
     let instance = wgpu::Instance::default();
