@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::f32::consts::{FRAC_PI_2, PI};
 
 use glam::{
     Mat4,
@@ -13,6 +13,7 @@ use winit::{
     },
     keyboard::Key,
 };
+use winit::keyboard::{KeyCode, PhysicalKey};
 
 pub struct CameraController {
     speed: f32,
@@ -21,6 +22,13 @@ pub struct CameraController {
     is_backward_pressed: bool,
     is_left_pressed: bool,
     is_right_pressed: bool,
+    is_up_pressed: bool,
+    is_down_pressed: bool,
+
+    rotate_right: bool,
+    rotate_left: bool,
+    rotate_up: bool,
+    rotate_down: bool,
 }
 
 impl CameraController {
@@ -31,6 +39,13 @@ impl CameraController {
             is_backward_pressed: false,
             is_left_pressed: false,
             is_right_pressed: false,
+            is_up_pressed: false,
+            is_down_pressed: false,
+
+            rotate_right: false,
+            rotate_left: false,
+            rotate_up: false,
+            rotate_down: false,
         };
     }
 
@@ -38,6 +53,7 @@ impl CameraController {
         match event {
             KeyEvent {
                 logical_key,
+                physical_key,
                 state,
                 ..
             } => {
@@ -53,6 +69,27 @@ impl CameraController {
                     }
                     Key::Character("d") => {
                         self.is_right_pressed = (state == ElementState::Pressed);
+                    }
+                    _ => {}
+                }
+                match physical_key {
+                    PhysicalKey::Code(KeyCode::Space) => {
+                        self.is_up_pressed = (state == ElementState::Pressed);
+                    }
+                    PhysicalKey::Code(KeyCode::ShiftLeft) => {
+                        self.is_down_pressed = (state == ElementState::Pressed);
+                    }
+                    PhysicalKey::Code(KeyCode::ArrowLeft) => {
+                        self.rotate_left = (state == ElementState::Pressed);
+                    }
+                    PhysicalKey::Code(KeyCode::ArrowRight) => {
+                        self.rotate_right = (state == ElementState::Pressed);
+                    }
+                    PhysicalKey::Code(KeyCode::ArrowUp) => {
+                        self.rotate_up = (state == ElementState::Pressed);
+                    }
+                    PhysicalKey::Code(KeyCode::ArrowDown) => {
+                        self.rotate_down = (state == ElementState::Pressed);
                     }
                     _ => {}
                 }
@@ -73,6 +110,28 @@ impl CameraController {
         if self.is_right_pressed {
             camera.move_right(self.speed);
         }
+        if self.is_up_pressed {
+            camera.move_up(self.speed);
+        }
+        if self.is_down_pressed {
+            camera.move_down(self.speed);
+        }
+
+
+        if self.rotate_up {
+            camera.rotation += Vec3::new(0.1f32, 0f32, 0f32);
+        }
+        if self.rotate_down {
+            camera.rotation += Vec3::new(-0.1f32, 0f32, 0f32);
+        }
+        if self.rotate_left {
+            camera.rotation += Vec3::new(0f32, 0f32, 0.1f32);
+        }
+        if self.rotate_right {
+            camera.rotation += Vec3::new(0f32, 0f32, -0.1f32);
+        }
+
+        camera.update_projection_view_matrix();
     }
 }
 
@@ -87,8 +146,8 @@ pub struct Camera {
 impl Camera {
     pub fn new(aspect_ratio: f32) -> Camera {
         return Self {
-            position: Vec3::ZERO,
-            rotation: Vec3::ZERO,
+            position: Vec3::new(0f32, -3f32, 0f32),
+            rotation: Vec3::new(FRAC_PI_2, 0f32, 0f32),
 
             projection_view_matrix: Mat4::IDENTITY,
             aspect_ratio,
@@ -101,50 +160,62 @@ impl Camera {
     }
 
     fn update_projection_view_matrix(&mut self) {
-        let projection = glam::Mat4::perspective_rh(70f32 * PI / 180f32, self.aspect_ratio, 0.01, 100.0);
-        let rotation = Mat4::from_rotation_x(self.rotation.x) * Mat4::from_rotation_y(self.rotation.y) * Mat4::from_rotation_z(self.rotation.z);
-        let position = Mat4::from_translation(self.position);
+        let projection = Mat4::perspective_infinite_rh(70f32 * PI / 180f32, self.aspect_ratio, 0.01);
+        let rotation = Mat4::from_rotation_x(-self.rotation.x) * Mat4::from_rotation_y(-self.rotation.y) * Mat4::from_rotation_z(-self.rotation.z);
+        let position = Mat4::from_translation(-self.position);
 
         self.projection_view_matrix = projection * rotation * position;
     }
 
     pub fn move_forward(&mut self, speed: f32) {
-        let rotation = Mat4::from_rotation_x(self.rotation.x) * Mat4::from_rotation_y(self.rotation.y) * Mat4::from_rotation_z(self.rotation.z);
-        let forward = rotation * Vec4::new(speed, 0f32, 0f32, 0f32);
-        let forward = forward.truncate();
+        let rotation = Mat4::from_rotation_x(-self.rotation.x) * Mat4::from_rotation_y(-self.rotation.y) * Mat4::from_rotation_z(-self.rotation.z);
+        let forward = rotation.transpose() * Vec4::new(0f32, 0f32, -speed, 0f32);
+        let mut forward = forward.truncate();
+
+        forward.z = 0f32;
 
         self.position += forward;
-
-        self.update_projection_view_matrix();
     }
 
     pub fn move_backward(&mut self, speed: f32) {
-        let rotation = Mat4::from_rotation_x(self.rotation.x) * Mat4::from_rotation_y(self.rotation.y) * Mat4::from_rotation_z(self.rotation.z);
-        let backward = rotation * Vec4::new(-speed, 0f32, 0f32, 0f32);
-        let backward = backward.truncate();
+        let rotation = Mat4::from_rotation_x(-self.rotation.x) * Mat4::from_rotation_y(-self.rotation.y) * Mat4::from_rotation_z(-self.rotation.z);
+        let backward = rotation.transpose() * Vec4::new(0f32, 0f32, speed, 0f32);
+        let mut backward = backward.truncate();
+
+        backward.z = 0f32;
 
         self.position += backward;
-
-        self.update_projection_view_matrix();
     }
 
     pub fn move_left(&mut self, speed: f32) {
-        let rotation = Mat4::from_rotation_x(self.rotation.x) * Mat4::from_rotation_y(self.rotation.y) * Mat4::from_rotation_z(self.rotation.z);
-        let left = rotation * Vec4::new(0f32, speed, 0f32, 0f32);
-        let left = left.truncate();
+        let rotation = Mat4::from_rotation_x(-self.rotation.x) * Mat4::from_rotation_y(-self.rotation.y) * Mat4::from_rotation_z(-self.rotation.z);
+        let forward = rotation.transpose() * Vec4::new(0f32, 0f32, -speed, 0f32);
+        let mut forward = forward.truncate();
+
+        forward.z = 0f32;
+
+        let left = Vec3::Z.cross(forward);
 
         self.position += left;
-
-        self.update_projection_view_matrix();
     }
 
     pub fn move_right(&mut self, speed: f32) {
-        let rotation = Mat4::from_rotation_x(self.rotation.x) * Mat4::from_rotation_y(self.rotation.y) * Mat4::from_rotation_z(self.rotation.z);
-        let right = rotation * Vec4::new(0f32, -speed, 0f32, 0f32);
-        let right = right.truncate();
+        let rotation = Mat4::from_rotation_x(-self.rotation.x) * Mat4::from_rotation_y(-self.rotation.y) * Mat4::from_rotation_z(-self.rotation.z);
+        let forward = rotation.transpose() * Vec4::new(0f32, 0f32, -speed, 0f32);
+        let mut forward = forward.truncate();
+
+        forward.z = 0f32;
+
+        let right = forward.cross(Vec3::Z);
 
         self.position += right;
+    }
 
-        self.update_projection_view_matrix();
+    pub fn move_up(&mut self, speed: f32) {
+        self.position += Vec3::new(0f32, 0f32, speed);
+    }
+
+    pub fn move_down(&mut self, speed: f32) {
+        self.position += Vec3::new(0f32, 0f32, -speed);
     }
 }

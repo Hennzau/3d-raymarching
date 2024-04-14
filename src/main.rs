@@ -27,6 +27,7 @@ use winit::{
         WindowBuilder,
     },
 };
+use winit::dpi::{LogicalSize, Size};
 use winit::event::{ElementState, KeyEvent};
 
 use crate::vox::renderer::VoxRenderer;
@@ -75,7 +76,10 @@ async fn build_backend(window: &Window) -> (Instance, Surface, SurfaceConfigurat
 fn main() {
     let mut event_loop = EventLoop::new().unwrap();
     let builder = WindowBuilder::new();
-    let window = builder.build(&event_loop).unwrap();
+    let window = builder
+        .with_title("Voxel Engine")
+        .with_inner_size(LogicalSize::new(1280, 720))
+        .build(&event_loop).unwrap();
 
     let (instance, surface, mut config, adapter, device, queue) = pollster::block_on(build_backend(&window));
 
@@ -100,8 +104,8 @@ fn main() {
 
                             window.request_redraw();
 
-                            vox.process_resize((config.width as usize, config.height as usize));
-
+                            vox.process_resize((config.width, config.height));
+                            renderer.process_resize((config.width, config.height), &device, &queue, vox.camera.projection_view_matrix);
                         }
                         WindowEvent::CloseRequested => target.exit(),
                         WindowEvent::RedrawRequested => renderer.render(&device, &surface, &queue),
@@ -121,6 +125,7 @@ fn main() {
         }
 
         vox.update(&mut renderer);
+        renderer.update_projection_view_uniform(&queue, vox.camera.projection_view_matrix);
 
         sleep(Duration::from_millis(16)); // At the moment we just put everything at 60 ticks/per_second
     }

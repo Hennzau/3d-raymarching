@@ -12,7 +12,7 @@ pub mod renderer;
 pub mod camera;
 
 pub struct VoxLogic {
-    camera: Camera,
+    pub camera: Camera,
     controller: CameraController,
 }
 
@@ -28,7 +28,7 @@ impl VoxLogic {
         self.controller.process(event.clone());
     }
 
-    pub fn process_resize(&mut self, new_size: (usize, usize)) {
+    pub fn process_resize(&mut self, new_size: (u32, u32)) {
         self.camera.process_resize(new_size.0 as f32 / new_size.1 as f32);
     }
 

@@ -8,43 +8,33 @@ use bytemuck::{
     Zeroable,
 };
 
-use glam::{Mat4, U16Vec4, UVec3};
+use glam::{Mat4, U16Vec4, UVec3, Vec3};
 
-use wgpu::{
-    Adapter,
-    BindGroup,
-    Buffer,
-    Queue,
-    Device,
-    PipelineLayout,
-    RenderPipeline,
-    ShaderModule,
-    Surface,
-};
+use wgpu::{Adapter, BindGroup, Buffer, Queue, Device, PipelineLayout, RenderPipeline, ShaderModule, Surface, CommandBuffer, CommandEncoder, RenderPass, Face, TextureFormat};
 
 use wgpu::util::DeviceExt;
+use crate::vox::renderer::chunk::ChunkRenderData;
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 pub struct TerrainVertex {
-    position: [u32; 3],
+    position: [f32; 3],
     color: [u8; 4],
 }
 
 impl TerrainVertex {
     pub fn new(position: UVec3, color: U16Vec4) -> Self {
         return Self {
-            position: [position.x, position.y, position.z],
+            position: [position.x as f32, position.y as f32, position.z as f32],
             color: [color.x as u8, color.y as u8, color.z as u8, color.w as u8],
         };
     }
 }
 
 pub struct TerrainRenderer {
-    bind_group: BindGroup,
-    shader: ShaderModule,
-    pipeline_layout: PipelineLayout,
-    render_pipeline: RenderPipeline,
+    pub bind_group: BindGroup,
+    pub shader: ShaderModule,
+    pub render_pipeline: RenderPipeline,
 
     projection_view_uniform: Buffer,
 }
@@ -106,7 +96,7 @@ impl TerrainRenderer {
             step_mode: wgpu::VertexStepMode::Vertex,
             attributes: &[
                 wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Uint32x3,
+                    format: wgpu::VertexFormat::Float32x3,
                     offset: 0,
                     shader_location: 0,
                 },
@@ -132,10 +122,16 @@ impl TerrainRenderer {
                 targets: &[Some(swapchain_format.into())],
             }),
             primitive: wgpu::PrimitiveState {
-                cull_mode: None,
+                cull_mode: Some(Face::Back),
                 ..Default::default()
             },
-            depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: TextureFormat::Depth32Float,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState::default(),
             multiview: None,
         });
@@ -143,7 +139,6 @@ impl TerrainRenderer {
         return Self {
             bind_group,
             shader,
-            pipeline_layout,
             render_pipeline,
 
             projection_view_uniform,
@@ -152,6 +147,7 @@ impl TerrainRenderer {
 
     pub fn update_projection_view_uniform(&mut self, queue: &Queue, projection_view_matrix: Mat4) {
         let projection_view_ref: &[f32; 16] = projection_view_matrix.as_ref();
+
         queue.write_buffer(&self.projection_view_uniform, 0, bytemuck::cast_slice(projection_view_ref));
     }
 }
