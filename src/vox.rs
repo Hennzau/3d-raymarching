@@ -5,7 +5,6 @@ use crate::vox::{
         Camera,
         CameraController,
     },
-    renderer::VoxRenderer,
 };
 
 pub mod renderer;
@@ -32,7 +31,7 @@ impl VoxLogic {
         self.camera.process_resize(new_size.0 as f32 / new_size.1 as f32);
     }
 
-    pub fn update(&mut self, renderer: &mut VoxRenderer) {
+    pub fn update(&mut self) {
         self.controller.update(&mut self.camera);
     }
 }

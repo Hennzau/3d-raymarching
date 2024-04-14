@@ -27,11 +27,12 @@ use winit::{
         WindowBuilder,
     },
 };
-use winit::dpi::{LogicalSize, Size};
-use winit::event::{ElementState, KeyEvent};
+use winit::dpi::LogicalSize;
 
-use crate::vox::renderer::VoxRenderer;
-use crate::vox::VoxLogic;
+use crate::vox::{
+    renderer::VoxRenderer,
+    VoxLogic,
+};
 
 mod vox;
 
@@ -65,7 +66,7 @@ async fn build_backend(window: &Window) -> (Instance, Surface, SurfaceConfigurat
     size.width = size.width.max(1);
     size.height = size.height.max(1);
 
-    let mut config = surface
+    let config = surface
         .get_default_config(&adapter, size.width, size.height)
         .unwrap();
     surface.configure(&device, &config);
@@ -81,7 +82,7 @@ fn main() {
         .with_inner_size(LogicalSize::new(1280, 720))
         .build(&event_loop).unwrap();
 
-    let (instance, surface, mut config, adapter, device, queue) = pollster::block_on(build_backend(&window));
+    let (_instance, surface, mut config, adapter, device, queue) = pollster::block_on(build_backend(&window));
 
     let mut vox = VoxLogic::new(config.width as f32 / config.height as f32);
     let mut renderer = VoxRenderer::new(&device, &config, &surface, &adapter);
@@ -93,7 +94,7 @@ fn main() {
                 Event::AboutToWait => window.request_redraw(),
                 Event::WindowEvent {
                     event,
-                    window_id
+                    ..
                 } => {
                     match event {
                         WindowEvent::Resized(new_size) => {
@@ -120,11 +121,11 @@ fn main() {
             }
         });
 
-        if let PumpStatus::Exit(exit_code) = status {
+        if let PumpStatus::Exit(_) = status {
             break 'main;
         }
 
-        vox.update(&mut renderer);
+        vox.update();
         renderer.update_projection_view_uniform(&queue, vox.camera.projection_view_matrix);
 
         sleep(Duration::from_millis(16)); // At the moment we just put everything at 60 ticks/per_second

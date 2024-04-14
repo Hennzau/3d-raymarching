@@ -8,12 +8,25 @@ use bytemuck::{
     Zeroable,
 };
 
-use glam::{Mat4, U16Vec4, UVec3, Vec3};
+use glam::{
+    Mat4,
+    U16Vec4,
+    UVec3,
+};
 
-use wgpu::{Adapter, BindGroup, Buffer, Queue, Device, PipelineLayout, RenderPipeline, ShaderModule, Surface, CommandBuffer, CommandEncoder, RenderPass, Face, TextureFormat};
-
-use wgpu::util::DeviceExt;
-use crate::vox::renderer::chunk::ChunkRenderData;
+use wgpu::{
+    Adapter,
+    BindGroup,
+    Buffer,
+    Queue,
+    Device,
+    RenderPipeline,
+    ShaderModule,
+    Surface,
+    Face,
+    TextureFormat,
+    util::DeviceExt,
+};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]

@@ -1,8 +1,13 @@
-use wgpu::{Device, Surface, Adapter, Queue, SurfaceConfiguration, util::DeviceExt, TextureView, Texture, Sampler, TextureFormat};
-
-use bytemuck::{
-    Pod,
-    Zeroable,
+use wgpu::{
+    Device,
+    Surface,
+    Adapter,
+    Queue,
+    SurfaceConfiguration,
+    TextureView,
+    Texture,
+    Sampler,
+    TextureFormat,
 };
 
 use glam::Mat4;
