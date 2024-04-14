@@ -1,10 +1,34 @@
-use std::borrow::Cow;
-use std::f32::consts;
-use std::mem;
-use wgpu::{Device, Surface, Adapter, PipelineLayout, RenderPipeline, ShaderModule, Queue, SurfaceConfiguration, VertexBufferLayout, BindGroup, Buffer};
-use bytemuck::{Pod, Zeroable};
-use glam::Mat4;
-use wgpu::util::DeviceExt;
+use std::{
+    borrow::Cow,
+    f32::consts::PI,
+    mem,
+};
+
+use wgpu::{
+    Device,
+    Surface,
+    Adapter,
+    RenderPipeline,
+    Queue,
+    SurfaceConfiguration,
+    VertexBufferLayout,
+    BindGroup,
+    Buffer,
+    util::DeviceExt,
+};
+
+use bytemuck::{
+    Pod,
+    Zeroable,
+};
+
+use glam::{
+    Mat4,
+    Vec3,
+};
+
+pub mod terrain;
+pub mod chunk;
 
 pub struct VoxRenderer {
     bind_group: BindGroup,
@@ -99,7 +123,7 @@ impl Cube {
             usage: wgpu::BufferUsages::INDEX,
         });
 
-        let transform = Mat4::IDENTITY;
+        let transform = Mat4::from_translation(Vec3::new(0f32, 3f32, 0f32));
         let transform_ref: &[f32; 16] = transform.as_ref();
         let transform_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Transform Buffer"),
@@ -132,7 +156,7 @@ impl Cube {
 
 impl VoxRenderer {
     pub fn new(device: &Device, config: &SurfaceConfiguration, surface: &Surface, adapter: &Adapter) -> Self {
-        let projection = glam::Mat4::perspective_rh(consts::FRAC_PI_4, config.width as f32 / config.height as f32, 1.0, 10.0);
+        let projection = glam::Mat4::perspective_rh(70f32 * PI / 180f32, config.width as f32 / config.height as f32, 0.01, 100.0);
         let view = glam::Mat4::look_at_rh(
             glam::Vec3::new(1.5f32, -5.0, 3.0),
             glam::Vec3::ZERO,
@@ -193,7 +217,7 @@ impl VoxRenderer {
         // Load the shaders from disk
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: None,
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
+            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("renderer/terrain.wgsl"))),
         });
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {

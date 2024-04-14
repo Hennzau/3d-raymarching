@@ -27,6 +27,7 @@ use winit::{
         WindowBuilder,
     },
 };
+use winit::event::{ElementState, KeyEvent};
 
 use crate::vox::renderer::VoxRenderer;
 use crate::vox::VoxLogic;
@@ -78,7 +79,7 @@ fn main() {
 
     let (instance, surface, mut config, adapter, device, queue) = pollster::block_on(build_backend(&window));
 
-    let mut vox = VoxLogic::new();
+    let mut vox = VoxLogic::new(config.width as f32 / config.height as f32);
     let mut renderer = VoxRenderer::new(&device, &config, &surface, &adapter);
 
     'main: loop {
@@ -87,25 +88,29 @@ fn main() {
             match event {
                 Event::AboutToWait => window.request_redraw(),
                 Event::WindowEvent {
-                    event: WindowEvent::Resized(new_size),
+                    event,
                     window_id
                 } => {
-                    config.width = new_size.width.max(1);
-                    config.height = new_size.height.max(1);
+                    match event {
+                        WindowEvent::Resized(new_size) => {
+                            config.width = new_size.width.max(1);
+                            config.height = new_size.height.max(1);
 
-                    surface.configure(&device, &config);
+                            surface.configure(&device, &config);
 
-                    window.request_redraw();
-                }
-                Event::WindowEvent {
-                    event: WindowEvent::CloseRequested,
-                    window_id
-                } => target.exit(),
-                Event::WindowEvent {
-                    event: WindowEvent::RedrawRequested,
-                    window_id
-                } => {
-                    renderer.render(&device, &surface, &queue);
+                            window.request_redraw();
+
+                            vox.process_resize((config.width as usize, config.height as usize));
+
+                        }
+                        WindowEvent::CloseRequested => target.exit(),
+                        WindowEvent::RedrawRequested => renderer.render(&device, &surface, &queue),
+                        WindowEvent::KeyboardInput {
+                            event,
+                            ..
+                        } => vox.process_keyboard(event),
+                        _ => {}
+                    }
                 }
                 _ => {}
             }
