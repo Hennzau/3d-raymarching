@@ -8,11 +8,7 @@ use bytemuck::{
     Zeroable,
 };
 
-use glam::{
-    Mat4,
-    U16Vec4,
-    UVec3,
-};
+use glam::Mat4;
 
 use wgpu::{
     Adapter,
@@ -36,10 +32,10 @@ pub struct TerrainVertex {
 }
 
 impl TerrainVertex {
-    pub fn new(position: UVec3, color: U16Vec4) -> Self {
+    pub fn new(position: [f32; 3], color: [u8; 4]) -> Self {
         return Self {
-            position: [position.x as f32, position.y as f32, position.z as f32],
-            color: [color.x as u8, color.y as u8, color.z as u8, color.w as u8],
+            position,
+            color,
         };
     }
 }

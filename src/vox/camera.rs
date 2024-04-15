@@ -6,12 +6,9 @@ use glam::{
     Vec4,
 };
 
-use winit::{
-    event::{
-        ElementState,
-        KeyEvent,
-    },
-    keyboard::Key,
+use winit::event::{
+    ElementState,
+    KeyEvent,
 };
 use winit::keyboard::{KeyCode, PhysicalKey};
 
@@ -52,27 +49,23 @@ impl CameraController {
     pub fn process(&mut self, event: KeyEvent) {
         match event {
             KeyEvent {
-                logical_key,
                 physical_key,
                 state,
                 ..
             } => {
-                match logical_key.as_ref() {
-                    Key::Character("z") => {
+                match physical_key {
+                    PhysicalKey::Code(KeyCode::KeyW) => {
                         self.is_forward_pressed = state == ElementState::Pressed;
                     }
-                    Key::Character("s") => {
+                    PhysicalKey::Code(KeyCode::KeyS) => {
                         self.is_backward_pressed = state == ElementState::Pressed;
                     }
-                    Key::Character("q") => {
+                    PhysicalKey::Code(KeyCode::KeyA) => {
                         self.is_left_pressed = state == ElementState::Pressed;
                     }
-                    Key::Character("d") => {
+                    PhysicalKey::Code(KeyCode::KeyD) => {
                         self.is_right_pressed = state == ElementState::Pressed;
                     }
-                    _ => {}
-                }
-                match physical_key {
                     PhysicalKey::Code(KeyCode::Space) => {
                         self.is_up_pressed = state == ElementState::Pressed;
                     }
@@ -97,37 +90,36 @@ impl CameraController {
         }
     }
 
-    pub fn update(&self, camera: &mut Camera) {
+    pub fn update(&self, delta_time: f32, camera: &mut Camera) {
         if self.is_forward_pressed {
-            camera.move_forward(self.speed);
+            camera.move_forward(self.speed * delta_time);
         }
         if self.is_backward_pressed {
-            camera.move_backward(self.speed);
+            camera.move_backward(self.speed * delta_time);
         }
         if self.is_left_pressed {
-            camera.move_left(self.speed);
+            camera.move_left(self.speed * delta_time);
         }
         if self.is_right_pressed {
-            camera.move_right(self.speed);
+            camera.move_right(self.speed * delta_time);
         }
         if self.is_up_pressed {
-            camera.move_up(self.speed);
+            camera.move_up(self.speed * delta_time);
         }
         if self.is_down_pressed {
-            camera.move_down(self.speed);
+            camera.move_down(self.speed * delta_time);
         }
-
         if self.rotate_up {
-            camera.rotation += Vec3::new(0.1f32, 0f32, 0f32);
+            camera.rotation += Vec3::new(PI * delta_time, 0f32, 0f32);
         }
         if self.rotate_down {
-            camera.rotation += Vec3::new(-0.1f32, 0f32, 0f32);
+            camera.rotation += Vec3::new(-PI * delta_time, 0f32, 0f32);
         }
         if self.rotate_left {
-            camera.rotation += Vec3::new(0f32, 0f32, 0.1f32);
+            camera.rotation += Vec3::new(0f32, 0f32, PI * delta_time);
         }
         if self.rotate_right {
-            camera.rotation += Vec3::new(0f32, 0f32, -0.1f32);
+            camera.rotation += Vec3::new(0f32, 0f32, -PI * delta_time);
         }
 
         camera.update_projection_view_matrix();
@@ -166,9 +158,9 @@ impl Camera {
         self.projection_view_matrix = projection * rotation * position;
     }
 
-    pub fn move_forward(&mut self, speed: f32) {
+    pub fn move_forward(&mut self, delta: f32) {
         let rotation = Mat4::from_rotation_x(-self.rotation.x) * Mat4::from_rotation_y(-self.rotation.y) * Mat4::from_rotation_z(-self.rotation.z);
-        let forward = rotation.transpose() * Vec4::new(0f32, 0f32, -speed, 0f32);
+        let forward = rotation.transpose() * Vec4::new(0f32, 0f32, -delta, 0f32);
         let mut forward = forward.truncate();
 
         forward.z = 0f32;
@@ -176,9 +168,9 @@ impl Camera {
         self.position += forward;
     }
 
-    pub fn move_backward(&mut self, speed: f32) {
+    pub fn move_backward(&mut self, delta: f32) {
         let rotation = Mat4::from_rotation_x(-self.rotation.x) * Mat4::from_rotation_y(-self.rotation.y) * Mat4::from_rotation_z(-self.rotation.z);
-        let backward = rotation.transpose() * Vec4::new(0f32, 0f32, speed, 0f32);
+        let backward = rotation.transpose() * Vec4::new(0f32, 0f32, delta, 0f32);
         let mut backward = backward.truncate();
 
         backward.z = 0f32;
@@ -186,9 +178,9 @@ impl Camera {
         self.position += backward;
     }
 
-    pub fn move_left(&mut self, speed: f32) {
+    pub fn move_left(&mut self, delta: f32) {
         let rotation = Mat4::from_rotation_x(-self.rotation.x) * Mat4::from_rotation_y(-self.rotation.y) * Mat4::from_rotation_z(-self.rotation.z);
-        let forward = rotation.transpose() * Vec4::new(0f32, 0f32, -speed, 0f32);
+        let forward = rotation.transpose() * Vec4::new(0f32, 0f32, -delta, 0f32);
         let mut forward = forward.truncate();
 
         forward.z = 0f32;
@@ -198,9 +190,9 @@ impl Camera {
         self.position += left;
     }
 
-    pub fn move_right(&mut self, speed: f32) {
+    pub fn move_right(&mut self, delta: f32) {
         let rotation = Mat4::from_rotation_x(-self.rotation.x) * Mat4::from_rotation_y(-self.rotation.y) * Mat4::from_rotation_z(-self.rotation.z);
-        let forward = rotation.transpose() * Vec4::new(0f32, 0f32, -speed, 0f32);
+        let forward = rotation.transpose() * Vec4::new(0f32, 0f32, -delta, 0f32);
         let mut forward = forward.truncate();
 
         forward.z = 0f32;
@@ -210,11 +202,11 @@ impl Camera {
         self.position += right;
     }
 
-    pub fn move_up(&mut self, speed: f32) {
-        self.position += Vec3::new(0f32, 0f32, speed);
+    pub fn move_up(&mut self, delta: f32) {
+        self.position += Vec3::new(0f32, 0f32, delta);
     }
 
-    pub fn move_down(&mut self, speed: f32) {
-        self.position += Vec3::new(0f32, 0f32, -speed);
+    pub fn move_down(&mut self, delta: f32) {
+        self.position += Vec3::new(0f32, 0f32, -delta);
     }
 }

@@ -84,7 +84,7 @@ fn main() {
     let (_instance, surface, mut config, adapter, device, queue) = pollster::block_on(build_backend(&window));
 
     let mut vox = VoxLogic::new(config.width as f32 / config.height as f32);
-    let mut renderer = VoxRenderer::new(&device, &config, &surface, &adapter);
+    let mut renderer = VoxRenderer::new(&device, &config, &surface, &adapter, &vox.world);
 
     'main: loop {
         let timeout = Some(Duration::ZERO);
@@ -124,7 +124,7 @@ fn main() {
             break 'main;
         }
 
-        vox.update();
+        vox.update(Duration::from_millis(16).as_secs_f32());
         renderer.update_projection_view_uniform(&queue, vox.camera.projection_view_matrix);
 
         sleep(Duration::from_millis(16)); // At the moment we just put everything at 60 ticks/per_second

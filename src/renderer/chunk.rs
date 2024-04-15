@@ -8,8 +8,10 @@ use wgpu::{
     Device,
     util::DeviceExt,
 };
+use crate::renderer::cube::{face_down, face_back, face_front, face_indices, face_up, face_left, face_right};
 
 use crate::renderer::terrain::TerrainVertex;
+use crate::vox::chunk::{ChunkData, VoxelData};
 
 pub struct ChunkRenderData {
     pub vertex_buffer: Buffer,
@@ -19,61 +21,57 @@ pub struct ChunkRenderData {
 }
 
 impl ChunkRenderData {
-    pub fn new(device: &Device) -> Self {
-        let vertex_data: Vec<TerrainVertex> = Vec::from([
-            TerrainVertex::new(UVec3::new(0, 0, 0), U16Vec4::new(255, 0, 0, 1)),
-            TerrainVertex::new(UVec3::new(1, 0, 0), U16Vec4::new(255, 0, 0, 1)),
-            TerrainVertex::new(UVec3::new(0, 1, 0), U16Vec4::new(255, 0, 0, 1)),
-            TerrainVertex::new(UVec3::new(1, 1, 0), U16Vec4::new(255, 0, 0, 1)),
-            TerrainVertex::new(UVec3::new(0, 0, 1), U16Vec4::new(255, 0, 0, 1)),
-            TerrainVertex::new(UVec3::new(1, 0, 1), U16Vec4::new(255, 0, 0, 1)),
-            TerrainVertex::new(UVec3::new(0, 1, 1), U16Vec4::new(255, 0, 0, 1)),
-            TerrainVertex::new(UVec3::new(1, 1, 1), U16Vec4::new(255, 0, 0, 1)),
-            TerrainVertex::new(UVec3::new(0, 0, 3), U16Vec4::new(255, 255, 0, 1)),
-            TerrainVertex::new(UVec3::new(1, 0, 3), U16Vec4::new(255, 255, 0, 1)),
-            TerrainVertex::new(UVec3::new(0, 1, 3), U16Vec4::new(255, 255, 0, 1)),
-            TerrainVertex::new(UVec3::new(1, 1, 3), U16Vec4::new(255, 255, 0, 1)),
-            TerrainVertex::new(UVec3::new(0, 0, 4), U16Vec4::new(255, 255, 0, 1)),
-            TerrainVertex::new(UVec3::new(1, 0, 4), U16Vec4::new(255, 255, 0, 1)),
-            TerrainVertex::new(UVec3::new(0, 1, 4), U16Vec4::new(255, 255, 0, 1)),
-            TerrainVertex::new(UVec3::new(1, 1, 4), U16Vec4::new(255, 255, 0, 1)),
-            TerrainVertex::new(UVec3::new(3, 0, 0), U16Vec4::new(255, 0, 255, 1)),
-            TerrainVertex::new(UVec3::new(4, 0, 0), U16Vec4::new(255, 0, 255, 1)),
-            TerrainVertex::new(UVec3::new(3, 1, 0), U16Vec4::new(255, 0, 255, 1)),
-            TerrainVertex::new(UVec3::new(4, 1, 0), U16Vec4::new(255, 0, 255, 1)),
-            TerrainVertex::new(UVec3::new(3, 0, 1), U16Vec4::new(255, 0, 255, 1)),
-            TerrainVertex::new(UVec3::new(4, 0, 1), U16Vec4::new(255, 0, 255, 1)),
-            TerrainVertex::new(UVec3::new(3, 1, 1), U16Vec4::new(255, 0, 255, 1)),
-            TerrainVertex::new(UVec3::new(4, 1, 1), U16Vec4::new(255, 0, 255, 1)),
-            TerrainVertex::new(UVec3::new(0, 3, 0), U16Vec4::new(255, 255, 255, 1)),
-            TerrainVertex::new(UVec3::new(1, 3, 0), U16Vec4::new(255, 255, 255, 1)),
-            TerrainVertex::new(UVec3::new(0, 4, 0), U16Vec4::new(255, 255, 255, 1)),
-            TerrainVertex::new(UVec3::new(1, 4, 0), U16Vec4::new(255, 255, 255, 1)),
-            TerrainVertex::new(UVec3::new(0, 3, 1), U16Vec4::new(255, 255, 255, 1)),
-            TerrainVertex::new(UVec3::new(1, 3, 1), U16Vec4::new(255, 255, 255, 1)),
-            TerrainVertex::new(UVec3::new(0, 4, 1), U16Vec4::new(255, 255, 255, 1)),
-            TerrainVertex::new(UVec3::new(1, 4, 1), U16Vec4::new(255, 255, 255, 1)),
-        ]);
+    pub fn new(device: &Device, chunk_x: usize, chunk_y: usize, chunk_z: usize, chunk: &ChunkData) -> Self {
+        let mut vertex_data: Vec<TerrainVertex> = Vec::new();
+        let mut index_data: Vec<u16> = Vec::new();
 
-        let mut index_data: Vec<u16> = Vec::from([
-            0, 2, 1, 1, 2, 3, // Front
-            4, 5, 6, 6, 5, 7, // Back
-            0, 1, 4, 4, 1, 5, // Down
-            3, 2, 6, 3, 6, 7, // Up
-            0, 4, 2, 2, 4, 6, // Left
-            1, 3, 5, 5, 3, 7, // Right
-        ]);
+        let mut offset = 0;
 
-        for i in 0..36 {
-            index_data.push(index_data.get(i).unwrap() + 8)
-        }
+        for x in 0..16 {
+            for y in 0..16 {
+                for z in 0..16 {
+                    match chunk.data[x][y][z] {
+                        VoxelData::Air => {}
+                        VoxelData::Plain(data) => {
+                            let xx = chunk_x * 16 + x;
+                            let yy = chunk_y * 16 + y;
+                            let zz = chunk_z * 16 + z;
 
-        for i in 0..36 {
-            index_data.push(index_data.get(i).unwrap() + 16)
-        }
+                            let mut vertices = face_front(xx, yy, zz, data.color, data.front_light);
+                            let mut indices = face_indices(offset + 0);
+                            vertex_data.append(&mut vertices);
+                            index_data.append(&mut indices);
 
-        for i in 0..36 {
-            index_data.push(index_data.get(i).unwrap() + 24)
+                            let mut vertices = face_back(xx, yy, zz, data.color, data.back_light);
+                            let mut indices = face_indices(offset + 1);
+                            vertex_data.append(&mut vertices);
+                            index_data.append(&mut indices);
+
+                            let mut vertices = face_down(xx, yy, zz, data.color, data.down_light);
+                            let mut indices = face_indices(offset + 2);
+                            vertex_data.append(&mut vertices);
+                            index_data.append(&mut indices);
+
+                            let mut vertices = face_up(xx, yy, zz, data.color, data.up_light);
+                            let mut indices = face_indices(offset + 3);
+                            vertex_data.append(&mut vertices);
+                            index_data.append(&mut indices);
+
+                            let mut vertices = face_left(xx, yy, zz, data.color, data.left_light);
+                            let mut indices = face_indices(offset + 4);
+                            vertex_data.append(&mut vertices);
+                            index_data.append(&mut indices);
+
+                            let mut vertices = face_right(xx, yy, zz, data.color, data.right_light);
+                            let mut indices = face_indices(offset + 5);
+                            vertex_data.append(&mut vertices);
+                            index_data.append(&mut indices);
+
+                            offset += 6;
+                        }
+                    }
+                }
+            }
         }
 
         let index_count = index_data.len();

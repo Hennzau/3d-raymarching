@@ -6,22 +6,26 @@ use crate::vox::{
         CameraController,
     },
 };
+use crate::vox::world::World;
 
 pub mod camera;
 
 pub mod world;
 pub mod chunk;
+pub mod cube;
 
 pub struct VoxLogic {
     pub camera: Camera,
     controller: CameraController,
+    pub world: World,
 }
 
 impl VoxLogic {
     pub fn new(aspect_ratio: f32) -> Self {
         return Self {
             camera: Camera::new(aspect_ratio),
-            controller: CameraController::new(1f32),
+            controller: CameraController::new(50f32),
+            world: World::new(),
         };
     }
 
@@ -33,7 +37,7 @@ impl VoxLogic {
         self.camera.process_resize(new_size.0 as f32 / new_size.1 as f32);
     }
 
-    pub fn update(&mut self) {
-        self.controller.update(&mut self.camera);
+    pub fn update(&mut self, delta_time: f32) {
+        self.controller.update(delta_time, &mut self.camera);
     }
 }

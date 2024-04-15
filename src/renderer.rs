@@ -15,9 +15,11 @@ use crate::renderer::{
     chunk::ChunkRenderData,
     terrain::TerrainRenderer,
 };
+use crate::vox::world::World;
 
 pub mod terrain;
 pub mod chunk;
+pub mod cube;
 
 pub struct VoxRenderer {
     terrain_renderer: TerrainRenderer,
@@ -27,11 +29,19 @@ pub struct VoxRenderer {
 }
 
 impl VoxRenderer {
-    pub fn new(device: &Device, config: &SurfaceConfiguration, surface: &Surface, adapter: &Adapter) -> Self {
+    pub fn new(device: &Device, config: &SurfaceConfiguration, surface: &Surface, adapter: &Adapter, world: &World) -> Self {
+        let mut chunk_render_data: Vec<ChunkRenderData> = Vec::new();
+
+        for x in 0..2 {
+            for y in 0..2 {
+                chunk_render_data.push(ChunkRenderData::new(device, x, y, 0, &world.chunks[x][y]));
+            }
+        }
+
         return Self {
             terrain_renderer: TerrainRenderer::new(device, surface, adapter),
             depth_texture: Self::create_depth_texture(device, (config.width, config.height)),
-            chunk_render_data: Vec::from([ChunkRenderData::new(device)]),
+            chunk_render_data,
         };
     }
 
