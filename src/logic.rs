@@ -14,18 +14,33 @@ use winit::{
     },
 };
 
-use crate::logic::camera::Camera;
+use crate::logic::camera::{
+    Camera,
+    CameraController
+};
+use crate::logic::State::{Pause, Playing};
 
 pub mod camera;
 
+#[derive(PartialEq)]
+pub enum State {
+    Playing,
+    Pause
+}
+
 pub struct Logic {
-    camera: Camera,
+    pub camera: Camera,
+    pub controller: CameraController,
+
+    pub state: State,
 }
 
 impl Logic {
     pub fn new() -> Self {
         return Self {
-            camera: Camera::new()
+            camera: Camera::new(),
+            controller: CameraController::new(),
+            state: Pause,
         };
     }
 
@@ -38,20 +53,28 @@ impl Logic {
             } => {
                 match physical_key {
                     PhysicalKey::Code(KeyCode::Escape) => {
-                        window.set_cursor_grab(CursorGrabMode::None).expect("TODO: panic message");
-                        window.set_cursor_visible(true);
+                        if state == ElementState::Pressed {
+                            window.set_cursor_grab(CursorGrabMode::None).expect("Failed to set cursor grab mode");
+                            window.set_cursor_visible(true);
+                            self.state = State::Pause;
+                        }
                     }
                     _ => {}
                 }
             }
         }
+
+        self.controller.process_keyboard(key_event);
     }
 
     pub fn process_mouse_input(&mut self, window: &Window, state: ElementState, mouse_button: MouseButton) {
         match mouse_button {
             MouseButton::Left => {
-                window.set_cursor_grab(CursorGrabMode::Confined).expect("TODO: panic message");
-                window.set_cursor_visible(false);
+                if state == ElementState::Pressed {
+                    window.set_cursor_grab(CursorGrabMode::Locked).expect("Failed to set cursor grab mode");
+                    window.set_cursor_visible(false);
+                    self.state = State::Playing;
+                }
             }
             MouseButton::Right => {}
             MouseButton::Middle => {}
@@ -62,8 +85,14 @@ impl Logic {
     }
 
     pub fn process_mouse_motion(&mut self, delta: (f32, f32)) {
-        println!("{:?}", delta);
+        if self.state == Playing {
+            self.controller.process_mouse_motion(delta, &mut self.camera);
+        }
     }
 
-    pub fn update(&mut self) {}
+    pub fn update(&mut self, delta_time: f32) {
+        if self.state == Playing {
+            self.controller.update(delta_time, &mut self.camera);
+        }
+    }
 }
