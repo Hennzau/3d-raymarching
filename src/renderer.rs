@@ -1,133 +1,16 @@
-use wgpu::{
-    Device,
-    Surface,
-    Adapter,
-    Queue,
-    SurfaceConfiguration,
-    TextureView,
-    Texture,
-    TextureFormat,
-};
+use crate::logic::Logic;
+use crate::WGPUBackend;
 
-use glam::Mat4;
+pub struct Renderer {}
 
-use crate::renderer::{
-    chunk::ChunkRenderData,
-    terrain::TerrainRenderer,
-};
-use crate::vox::world::World;
-
-pub mod terrain;
-pub mod chunk;
-pub mod cube;
-
-pub struct VoxRenderer {
-    terrain_renderer: TerrainRenderer,
-    depth_texture: (Texture, TextureView),
-
-    chunk_render_data: Vec<ChunkRenderData>,
-}
-
-impl VoxRenderer {
-    pub fn new(device: &Device, config: &SurfaceConfiguration, surface: &Surface, adapter: &Adapter, world: &World) -> Self {
-        let mut chunk_render_data: Vec<ChunkRenderData> = Vec::new();
-
-        for x in 0..2 {
-            for y in 0..2 {
-                chunk_render_data.push(ChunkRenderData::new(device, x, y, 0, &world.chunks[x][y]));
-            }
-        }
-
-        return Self {
-            terrain_renderer: TerrainRenderer::new(device, surface, adapter),
-            depth_texture: Self::create_depth_texture(device, (config.width, config.height)),
-            chunk_render_data,
-        };
+impl Renderer {
+    pub fn new(wgpu_backend: &WGPUBackend, logic: &Logic) -> Self {
+        return Self {};
     }
 
-    fn create_depth_texture(device: &Device, size: (u32, u32)) -> (Texture, TextureView) {
-        let size = wgpu::Extent3d {
-            width: size.0,
-            height: size.1,
-            depth_or_array_layers: 1,
-        };
+    pub fn update(&mut self, wgpu_backend: &WGPUBackend, logic: &Logic) {}
 
-        let desc = wgpu::TextureDescriptor {
-            label: None,
-            size,
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: TextureFormat::Depth32Float,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT
-                | wgpu::TextureUsages::TEXTURE_BINDING,
-            view_formats: &[],
-        };
+    pub fn process_resize(&mut self, wgpu_backend: &WGPUBackend, logic: &Logic) {}
 
-        let texture = device.create_texture(&desc);
-
-        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-
-        return (texture, view);
-    }
-
-    pub fn render(&self, device: &Device, surface: &Surface, queue: &Queue) {
-        let frame = surface
-            .get_current_texture()
-            .expect("Failed to acquire next swap chain texture");
-        let view = frame
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-        let mut encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: None,
-            });
-        {
-            let mut render_pass =
-                encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    label: None,
-                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                        view: &view,
-                        resolve_target: None,
-                        ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
-                            store: wgpu::StoreOp::Store,
-                        },
-                    })],
-                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                        view: &self.depth_texture.1,
-                        depth_ops: Some(wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(1.0),
-                            store: wgpu::StoreOp::Store,
-                        }),
-                        stencil_ops: None,
-                    }),
-                    timestamp_writes: None,
-                    occlusion_query_set: None,
-                });
-
-            render_pass.set_pipeline(&self.terrain_renderer.render_pipeline);
-            render_pass.set_bind_group(0, &self.terrain_renderer.bind_group, &[]);
-
-            for chunk_render_data in &self.chunk_render_data {
-                render_pass.set_vertex_buffer(0, chunk_render_data.vertex_buffer.slice(..));
-                render_pass.set_index_buffer(chunk_render_data.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-
-                render_pass.draw_indexed(0..chunk_render_data.index_count as u32, 0, 0..1);
-            };
-        }
-
-        queue.submit(Some(encoder.finish()));
-        frame.present();
-    }
-
-    pub fn process_resize(&mut self, new_size: (u32, u32), device: &Device, queue: &Queue, projection_view_matrix: Mat4) {
-        self.update_projection_view_uniform(queue, projection_view_matrix);
-
-        self.depth_texture = Self::create_depth_texture(device, (new_size.0, new_size.1));
-    }
-
-    pub fn update_projection_view_uniform(&mut self, queue: &Queue, projection_view_matrix: Mat4) {
-        self.terrain_renderer.update_projection_view_uniform(queue, projection_view_matrix);
-    }
+    pub fn render(&self, wgpu_backend: &WGPUBackend, logic: &Logic) {}
 }
