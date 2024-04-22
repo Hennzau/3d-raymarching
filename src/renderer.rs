@@ -2,23 +2,26 @@ use wgpu::{
     LoadOp,
     Operations,
     RenderPassColorAttachment,
-    RenderPassDescriptor
+    RenderPassDescriptor,
+    util::DeviceExt
 };
-use wgpu::util::DeviceExt;
 
 use crate::{
     logic::Logic,
-    renderer::pipeline::ColorVertex
+    renderer::pipeline::SimpleVertex,
     WGPUBackend
 };
 
 pub mod pipeline;
 
 pub struct Renderer {
-    pipeline: pipeline::ColorPipeline,
+    pipeline: pipeline::RayMarchingPipeline,
 
-    projection_view_model_buffer: wgpu::Buffer,
+    camera_position_buffer: wgpu::Buffer,
+    camera_direction_buffer: wgpu::Buffer,
+
     bind_group: wgpu::BindGroup,
+
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
     num_indices: u32,
@@ -26,13 +29,21 @@ pub struct Renderer {
 
 impl Renderer {
     pub fn new(wgpu_backend: &WGPUBackend, logic: &Logic) -> Self {
-        let pipeline = pipeline::ColorPipeline::new(wgpu_backend);
+        let pipeline = pipeline::RayMarchingPipeline::new(wgpu_backend);
 
-        let projection_view_model_data = logic.camera.build_projection_view_matrix(wgpu_backend.config.width as f32 / wgpu_backend.config.height as f32);
-        let projection_view_model_ref: &[f32; 16] = projection_view_model_data.as_ref();
-        let projection_view_model_buffer = wgpu_backend.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let camera_position_data = logic.camera.position;
+        let camera_position_ref: &[f32; 3] = camera_position_data.as_ref();
+        let camera_position_buffer = wgpu_backend.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
-            contents: bytemuck::cast_slice(projection_view_model_ref),
+            contents: bytemuck::cast_slice(camera_position_ref),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+
+        let camera_direction_data = logic.camera.rotation;
+        let camera_direction_ref: &[f32; 3] = camera_direction_data.as_ref();
+        let camera_direction_buffer = wgpu_backend.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: None,
+            contents: bytemuck::cast_slice(camera_direction_ref),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
@@ -42,17 +53,21 @@ impl Renderer {
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: projection_view_model_buffer.as_entire_binding(),
+                    resource: camera_position_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: camera_direction_buffer.as_entire_binding(),
                 },
             ],
         });
 
         // Back culled green cube
-        let mut vertices = Vec::<ColorVertex>::new();
-        vertices.push(ColorVertex { position: [0.0, 0.0, 0.0], color: [0, 255, 0, 255] });
-        vertices.push(ColorVertex { position: [1.0, 0.0, 0.0], color: [0, 255, 0, 255] });
-        vertices.push(ColorVertex { position: [0.0, 0.0, 1.0], color: [0, 255, 0, 255] });
-        vertices.push(ColorVertex { position: [1.0, 0.0, 1.0], color: [0, 255, 0, 255] });
+        let mut vertices = Vec::<SimpleVertex>::new();
+        vertices.push(SimpleVertex { position: [-1.0, 1.0] });
+        vertices.push(SimpleVertex { position: [-1.0, -1.0] });
+        vertices.push(SimpleVertex { position: [1.0, -1.0] });
+        vertices.push(SimpleVertex { position: [1.0, 1.0] });
 
         let vertex_buffer = wgpu_backend.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
@@ -60,7 +75,7 @@ impl Renderer {
             usage: wgpu::BufferUsages::VERTEX,
         });
 
-        let indices: [u16; 6] = [0, 1, 2, 2, 1, 3];
+        let indices: [u16; 6] = [0, 1, 2, 2, 3, 0];
 
         let index_buffer = wgpu_backend.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
@@ -70,7 +85,8 @@ impl Renderer {
 
         return Self {
             pipeline,
-            projection_view_model_buffer,
+            camera_position_buffer,
+            camera_direction_buffer,
             bind_group,
             vertex_buffer,
             index_buffer,
@@ -79,10 +95,14 @@ impl Renderer {
     }
 
     pub fn update(&mut self, wgpu_backend: &WGPUBackend, logic: &Logic) {
-        let projection_view_model_data = logic.camera.build_projection_view_matrix(wgpu_backend.config.width as f32 / wgpu_backend.config.height as f32);
-        let projection_view_model_ref: &[f32; 16] = projection_view_model_data.as_ref();
+        let camera_position_data = logic.camera.position;
+        let camera_position_ref: &[f32; 3] = camera_position_data.as_ref();
 
-        wgpu_backend.queue.write_buffer(&self.projection_view_model_buffer, 0, bytemuck::cast_slice(projection_view_model_ref));
+        let camera_direction_data = logic.camera.rotation;
+        let camera_direction_ref: &[f32; 3] = camera_direction_data.as_ref();
+
+        wgpu_backend.queue.write_buffer(&self.camera_position_buffer, 0, bytemuck::cast_slice(camera_position_ref));
+        wgpu_backend.queue.write_buffer(&self.camera_direction_buffer, 0, bytemuck::cast_slice(camera_direction_ref));
     }
 
     pub fn process_resize(&mut self, wgpu_backend: &WGPUBackend, logic: &Logic) {}
