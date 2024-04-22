@@ -8,9 +8,9 @@ use wgpu::util::DeviceExt;
 
 use crate::{
     logic::Logic,
+    renderer::pipeline::ColorVertex
     WGPUBackend
 };
-use crate::renderer::pipeline::ColorVertex;
 
 pub mod pipeline;
 

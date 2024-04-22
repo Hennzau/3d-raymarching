@@ -1,7 +1,19 @@
-use std::borrow::Cow;
-use std::mem;
-use bytemuck::{Pod, Zeroable};
-use wgpu::{BindGroupLayout, Face, RenderPipeline};
+use std::{
+    borrow::Cow,
+    mem
+};
+
+use bytemuck::{
+    Pod,
+    Zeroable
+};
+
+use wgpu::{
+    BindGroupLayout,
+    Face,
+    RenderPipeline
+};
+
 use crate::WGPUBackend;
 
 #[repr(C)]

@@ -16,9 +16,8 @@ use winit::{
 
 use crate::logic::camera::{
     Camera,
-    CameraController
+    CameraController,
 };
-use crate::logic::State::{Pause, Playing};
 
 pub mod camera;
 
@@ -40,7 +39,7 @@ impl Logic {
         return Self {
             camera: Camera::new(),
             controller: CameraController::new(),
-            state: Pause,
+            state: State::Pause,
         };
     }
 
@@ -85,13 +84,13 @@ impl Logic {
     }
 
     pub fn process_mouse_motion(&mut self, delta: (f32, f32)) {
-        if self.state == Playing {
+        if self.state == State::Playing {
             self.controller.process_mouse_motion(delta, &mut self.camera);
         }
     }
 
     pub fn update(&mut self, delta_time: f32) {
-        if self.state == Playing {
+        if self.state == State::Playing {
             self.controller.update(delta_time, &mut self.camera);
         }
     }
