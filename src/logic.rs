@@ -1,3 +1,7 @@
+use std::f32::consts::FRAC_PI_2;
+
+use glam::Vec3;
+
 use winit::{
     window::{
         Window,
@@ -27,11 +31,18 @@ pub enum State {
     Pause
 }
 
+#[derive(PartialEq)]
+pub enum Scene {
+    TestRasterizer,
+    TestRayMarcher,
+}
+
 pub struct Logic {
     pub camera: Camera,
     pub controller: CameraController,
 
     pub state: State,
+    pub scene: Scene,
 }
 
 impl Logic {
@@ -40,6 +51,7 @@ impl Logic {
             camera: Camera::new(),
             controller: CameraController::new(),
             state: State::Pause,
+            scene: Scene::TestRayMarcher,
         };
     }
 
@@ -57,6 +69,24 @@ impl Logic {
                             window.set_cursor_visible(true);
                             self.state = State::Pause;
                         }
+                    }
+                    PhysicalKey::Code(KeyCode::KeyE) => {
+                        if state == ElementState::Pressed {
+                            self.scene = Scene::TestRasterizer;
+                            self.camera.position = Vec3::new(0f32, -3f32, 0f32);
+                            self.camera.rotation = Vec3::new(FRAC_PI_2, 0f32, 0f32);
+                        }
+                    }
+                    PhysicalKey::Code(KeyCode::KeyR) => {
+                        if state == ElementState::Pressed {
+                            self.scene = Scene::TestRayMarcher;
+                            self.camera.position = Vec3::new(0f32, -3f32, 0f32);
+                            self.camera.rotation = Vec3::new(FRAC_PI_2, 0f32, 0f32);
+                        }
+                    }
+                    PhysicalKey::Code(KeyCode::Enter) => {
+                        self.camera.position = Vec3::new(0f32, -3f32, 0f32);
+                        self.camera.rotation = Vec3::new(FRAC_PI_2, 0f32, 0f32);
                     }
                     _ => {}
                 }
@@ -85,7 +115,7 @@ impl Logic {
 
     pub fn process_mouse_motion(&mut self, delta: (f32, f32)) {
         if self.state == State::Playing {
-            self.controller.process_mouse_motion(delta, &mut self.camera);
+            self.controller.process_mouse_motion(delta);
         }
     }
 

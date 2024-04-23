@@ -87,7 +87,7 @@ impl ColorPipeline {
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
                 entry_point: "fs_main",
-                targets: &[Some(wgpu_backend.config.format.into())],
+                targets: &[Some(wgpu_backend.config.0.format.into())],
             }),
             primitive: wgpu::PrimitiveState {
                 cull_mode: Some(Face::Back),
@@ -131,13 +131,33 @@ impl RayMarchingPipeline {
                     },
                     count: None,
                 },
-                wgpu::BindGroupLayoutEntry { // Camera direction
+                wgpu::BindGroupLayoutEntry {
                     binding: 1,
                     visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
-                        min_binding_size: wgpu::BufferSize::new(12),
+                        min_binding_size: wgpu::BufferSize::new(64),
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: wgpu::BufferSize::new(64),
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 3,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: wgpu::BufferSize::new(8),
                     },
                     count: None,
                 }
@@ -146,7 +166,7 @@ impl RayMarchingPipeline {
 
         let shader = wgpu_backend.device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: None,
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shaders/raymarching.wgsl"))),
+            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shaders/ray_marching.wgsl"))),
         });
 
         let pipeline_layout = wgpu_backend.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -180,7 +200,7 @@ impl RayMarchingPipeline {
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
                 entry_point: "fs_main",
-                targets: &[Some(wgpu_backend.config.format.into())],
+                targets: &[Some(wgpu_backend.config.0.format.into())],
             }),
             primitive: wgpu::PrimitiveState {
                 cull_mode: Some(Face::Back),

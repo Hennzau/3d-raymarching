@@ -1,6 +1,10 @@
 use std::f32::consts::{FRAC_PI_2, PI};
 
-use glam::{Mat4, Vec3, Vec3A, Vec4};
+use glam::{
+    Mat4,
+    Vec3,
+    Vec4
+};
 
 use winit::{
     event::{
@@ -86,13 +90,13 @@ impl Camera {
         self.rotation += Vec3::new(angle, 0f32, 0f32);
     }
 
-    pub fn get_inverse_projection_matrix(&self, aspect_ratio: f32) -> Mat4 {
+    pub fn get_inverted_projection_matrix(&self, aspect_ratio: f32) -> Mat4 {
         let projection = Mat4::perspective_infinite_rh(70f32 * PI / 180f32, aspect_ratio, 0.01);
 
         return projection.inverse();
     }
 
-    pub fn get_inverse_view_matrix(&self) -> Mat4 {
+    pub fn get_inverted_view_matrix(&self) -> Mat4 {
         let rotation = Mat4::from_rotation_x(-self.rotation.x) * Mat4::from_rotation_y(-self.rotation.y) * Mat4::from_rotation_z(-self.rotation.z);
         let position = Mat4::from_translation(-self.position);
 
@@ -200,7 +204,7 @@ impl CameraController {
         self.vertical_delta = 0f32;
     }
 
-    pub fn process_mouse_motion(&mut self, delta: (f32, f32), camera: &mut Camera) {
+    pub fn process_mouse_motion(&mut self, delta: (f32, f32)) {
         self.horizontal_delta = -delta.0 * self.rotation_speed;
         self.vertical_delta = -delta.1 * self.rotation_speed;
     }
