@@ -25,7 +25,7 @@ impl TestRasterizer {
     pub fn new(wgpu_backend: &WGPUBackend, logic: &Logic) -> Self {
         let pipeline = pipeline::ColorPipeline::new(wgpu_backend);
 
-        let projection_view_model_data = logic.camera.build_projection_view_matrix(wgpu_backend.config.0.width as f32 / wgpu_backend.config.0.height as f32);
+        let projection_view_model_data = logic.camera.build_projection_view_matrix(wgpu_backend.config.width as f32 / wgpu_backend.config.height as f32);
         let projection_view_model_ref: &[f32; 16] = projection_view_model_data.as_ref();
         let projection_view_model_buffer = wgpu_backend.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
@@ -88,7 +88,7 @@ impl TestRasterizer {
     }
 
     pub fn update(&mut self, wgpu_backend: &WGPUBackend, logic: &Logic) {
-        let projection_view_model_data = logic.camera.build_projection_view_matrix(wgpu_backend.config.0.width as f32 / wgpu_backend.config.0.height as f32);
+        let projection_view_model_data = logic.camera.build_projection_view_matrix(wgpu_backend.config.width as f32 / wgpu_backend.config.height as f32);
         let projection_view_model_ref: &[f32; 16] = projection_view_model_data.as_ref();
 
         wgpu_backend.queue.write_buffer(&self.projection_view_model_buffer, 0, bytemuck::cast_slice(projection_view_model_ref));

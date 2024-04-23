@@ -72,7 +72,8 @@ async fn build_backend(window: &Window) -> (Instance, Surface, SurfaceConfigurat
 pub struct WGPUBackend<'a> {
     instance: Instance,
     surface: Surface<'a>,
-    config: (SurfaceConfiguration, f32),
+    config: SurfaceConfiguration,
+    scale_factor: f32,
     adapter: Adapter,
     device: Device,
     queue: Queue,
@@ -81,12 +82,11 @@ pub struct WGPUBackend<'a> {
 fn build_wgpu_backed(window: &Window) -> WGPUBackend {
     let (instance, surface, config, adapter, device, queue) = pollster::block_on(build_backend(&window));
 
-    let config = (config, window.scale_factor() as f32);
-
     return WGPUBackend {
         instance,
         surface,
         config,
+        scale_factor: window.scale_factor() as f32,
         adapter,
         device,
         queue,
@@ -127,10 +127,10 @@ fn main() {
                 } => {
                     match event {
                         WindowEvent::Resized(new_size) => {
-                            backend.config.0.width = new_size.width.max(1);
-                            backend.config.0.height = new_size.height.max(1);
+                            backend.config.width = new_size.width.max(1);
+                            backend.config.height = new_size.height.max(1);
 
-                            backend.surface.configure(&backend.device, &backend.config.0);
+                            backend.surface.configure(&backend.device, &backend.config);
                             renderer.process_resize(&backend, &logic);
 
                             window.request_redraw();

@@ -87,7 +87,7 @@ impl ColorPipeline {
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
                 entry_point: "fs_main",
-                targets: &[Some(wgpu_backend.config.0.format.into())],
+                targets: &[Some(wgpu_backend.config.format.into())],
             }),
             primitive: wgpu::PrimitiveState {
                 cull_mode: Some(Face::Back),
@@ -200,7 +200,7 @@ impl RayMarchingPipeline {
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
                 entry_point: "fs_main",
-                targets: &[Some(wgpu_backend.config.0.format.into())],
+                targets: &[Some(wgpu_backend.config.format.into())],
             }),
             primitive: wgpu::PrimitiveState {
                 cull_mode: Some(Face::Back),
