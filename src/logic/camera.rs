@@ -1,20 +1,16 @@
 use std::f32::consts::{FRAC_PI_2, PI};
 
-use glam::{
-    Mat4,
-    Vec3,
-    Vec4,
-};
+use glam::{Mat4, Vec3, Vec3A, Vec4};
 
 use winit::{
     event::{
         ElementState,
-        KeyEvent
+        KeyEvent,
     },
     keyboard::{
         KeyCode,
-        PhysicalKey
-    }
+        PhysicalKey,
+    },
 };
 
 pub struct Camera {
@@ -88,6 +84,19 @@ impl Camera {
 
     pub fn rotate_vertically(&mut self, angle: f32) {
         self.rotation += Vec3::new(angle, 0f32, 0f32);
+    }
+
+    pub fn get_inverse_projection_matrix(&self, aspect_ratio: f32) -> Mat4 {
+        let projection = Mat4::perspective_infinite_rh(70f32 * PI / 180f32, aspect_ratio, 0.01);
+
+        return projection.inverse();
+    }
+
+    pub fn get_inverse_view_matrix(&self) -> Mat4 {
+        let rotation = Mat4::from_rotation_x(-self.rotation.x) * Mat4::from_rotation_y(-self.rotation.y) * Mat4::from_rotation_z(-self.rotation.z);
+        let position = Mat4::from_translation(-self.position);
+
+        return (rotation * position).inverse();
     }
 
     pub fn build_projection_view_matrix(&self, aspect_ratio: f32) -> Mat4 {

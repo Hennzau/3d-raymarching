@@ -13,6 +13,8 @@ use crate::{
 };
 
 pub mod pipeline;
+pub mod rasterizer;
+pub mod raymarcher;
 
 pub struct Renderer {
     pipeline: pipeline::RayMarchingPipeline,

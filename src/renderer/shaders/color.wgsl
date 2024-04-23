@@ -32,7 +32,7 @@ fn fs_main(
 ) -> FragmentOutput {
     var result: FragmentOutput;
 
-    result.out_frag_color = vec4<f32> (in_frag_position.x / 1280.0, 0.0, 0.0, 1.0);
+    result.out_frag_color = vec4<f32> (1.0, 0.0, 0.0, 1.0);
 
     return result;
 }
