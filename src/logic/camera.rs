@@ -3,7 +3,7 @@ use std::f32::consts::{FRAC_PI_2, PI};
 use glam::{
     Mat4,
     Vec3,
-    Vec4
+    Vec4,
 };
 
 use winit::{
@@ -123,6 +123,11 @@ pub struct CameraController {
     is_up_pressed: bool,
     is_down_pressed: bool,
 
+    rotate_right: bool,
+    rotate_left: bool,
+    rotate_up: bool,
+    rotate_down: bool,
+
     horizontal_delta: f32,
     vertical_delta: f32,
 }
@@ -139,6 +144,11 @@ impl CameraController {
             is_right_pressed: false,
             is_up_pressed: false,
             is_down_pressed: false,
+
+            rotate_right: false,
+            rotate_left: false,
+            rotate_up: false,
+            rotate_down: false,
 
             horizontal_delta: 0f32,
             vertical_delta: 0f32,
@@ -171,6 +181,18 @@ impl CameraController {
                     PhysicalKey::Code(KeyCode::ShiftLeft) => {
                         self.is_down_pressed = state == ElementState::Pressed;
                     }
+                    PhysicalKey::Code(KeyCode::ArrowLeft) => {
+                        self.rotate_left = state == ElementState::Pressed;
+                    }
+                    PhysicalKey::Code(KeyCode::ArrowRight) => {
+                        self.rotate_right = state == ElementState::Pressed;
+                    }
+                    PhysicalKey::Code(KeyCode::ArrowUp) => {
+                        self.rotate_up = state == ElementState::Pressed;
+                    }
+                    PhysicalKey::Code(KeyCode::ArrowDown) => {
+                        self.rotate_down = state == ElementState::Pressed;
+                    }
                     _ => {}
                 }
             }
@@ -195,6 +217,19 @@ impl CameraController {
         }
         if self.is_down_pressed {
             camera.move_down(self.movement_speed * delta_time);
+        }
+
+        if self.rotate_up {
+            camera.rotate_vertically(3.0 * delta_time * self.rotation_speed);
+        }
+        if self.rotate_down {
+            camera.rotate_vertically(-3.0 * delta_time * self.rotation_speed);
+        }
+        if self.rotate_left {
+            camera.rotate_horizontally(3.0 * delta_time * self.rotation_speed);
+        }
+        if self.rotate_right {
+            camera.rotate_horizontally(-3.0 * delta_time * self.rotation_speed);
         }
 
         camera.rotate_horizontally(self.horizontal_delta * delta_time * self.rotation_speed);

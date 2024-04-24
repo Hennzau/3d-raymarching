@@ -53,7 +53,7 @@ impl TestRayMarcher {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
-        let surface_configuration_data = [wgpu_backend.config.width as f32 / wgpu_backend.scale_factor, wgpu_backend.config.height as f32 / wgpu_backend.scale_factor];
+        let surface_configuration_data = [wgpu_backend.config.width as f32, wgpu_backend.config.height as f32];
         let surface_configuration_buffer = wgpu_backend.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
             contents: bytemuck::cast_slice(surface_configuration_data.as_ref()),
@@ -133,7 +133,7 @@ impl TestRayMarcher {
     }
 
     pub fn process_resize(&mut self, wgpu_backend: &WGPUBackend, logic: &Logic) {
-        let surface_configuration_data = [wgpu_backend.config.width as f32 / wgpu_backend.scale_factor, wgpu_backend.config.height as f32 / wgpu_backend.scale_factor];
+        let surface_configuration_data = [wgpu_backend.config.width as f32, wgpu_backend.config.height as f32];
         wgpu_backend.queue.write_buffer(&self.surface_configuration_buffer, 0, bytemuck::cast_slice(surface_configuration_data.as_ref()));
 
         let camera_inverted_projection_data = logic.camera.get_inverted_projection_matrix(wgpu_backend.config.width as f32 / wgpu_backend.config.height as f32);

@@ -28,7 +28,7 @@ pub mod camera;
 #[derive(PartialEq)]
 pub enum State {
     Playing,
-    Pause
+    Pause,
 }
 
 #[derive(PartialEq)]
@@ -96,11 +96,21 @@ impl Logic {
         self.controller.process_keyboard(key_event);
     }
 
+    #[cfg(target_os = "windows")]
+    fn grab_cursor(window: &Window) {
+        window.set_cursor_grab(CursorGrabMode::Confined).expect("Failed to set cursor grab mode");
+    }
+
+    #[cfg(target_os = "macos")]
+    fn grab_cursor(window: &Window) {
+        window.set_cursor_grab(CursorGrabMode::Locked).expect("Failed to set cursor grab mode");
+    }
+
     pub fn process_mouse_input(&mut self, window: &Window, state: ElementState, mouse_button: MouseButton) {
         match mouse_button {
             MouseButton::Left => {
                 if state == ElementState::Pressed {
-                    window.set_cursor_grab(CursorGrabMode::Locked).expect("Failed to set cursor grab mode");
+                    Self::grab_cursor(window);
                     window.set_cursor_visible(false);
                     self.state = State::Playing;
                 }

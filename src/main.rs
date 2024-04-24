@@ -73,7 +73,6 @@ pub struct WGPUBackend<'a> {
     instance: Instance,
     surface: Surface<'a>,
     config: SurfaceConfiguration,
-    scale_factor: f32,
     adapter: Adapter,
     device: Device,
     queue: Queue,
@@ -86,7 +85,6 @@ fn build_wgpu_backed(window: &Window) -> WGPUBackend {
         instance,
         surface,
         config,
-        scale_factor: window.scale_factor() as f32,
         adapter,
         device,
         queue,
@@ -120,7 +118,6 @@ fn main() {
         let timeout = Some(Duration::ZERO);
         let status = event_loop.pump_events(timeout, |event, target| {
             match event {
-                Event::AboutToWait => window.request_redraw(),
                 Event::WindowEvent {
                     event,
                     ..
@@ -132,11 +129,8 @@ fn main() {
 
                             backend.surface.configure(&backend.device, &backend.config);
                             renderer.process_resize(&backend, &logic);
-
-                            window.request_redraw();
                         }
                         WindowEvent::CloseRequested => target.exit(),
-                        WindowEvent::RedrawRequested => renderer.render(&backend, &logic),
                         WindowEvent::KeyboardInput {
                             event,
                             ..
@@ -167,6 +161,8 @@ fn main() {
         if let PumpStatus::Exit(_) = status {
             break 'main;
         }
+
+        renderer.render(&backend, &logic);
 
         logic.update(1.0 / 60.0);
         renderer.update(&backend, &logic);
