@@ -69,7 +69,6 @@ fn fs_main(
 
         t = t + d;
 
-
         if (d < 0.001 || t > 100.0) {
             break;
         }
