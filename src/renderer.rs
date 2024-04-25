@@ -11,6 +11,11 @@ use crate::{
     WGPUBackend
 };
 
+use crate::logic::{
+    LogicState,
+    play::PipelineType
+};
+
 pub mod pipeline;
 pub mod rasterizer;
 pub mod ray_marcher;
@@ -22,8 +27,8 @@ pub struct Renderer {
 
 impl Renderer {
     pub fn new(wgpu_backend: &WGPUBackend, logic: &Logic) -> Self {
-        let rasterizer = rasterizer::TestRasterizer::new(wgpu_backend, logic);
-        let ray_marcher = ray_marcher::TestRayMarcher::new(wgpu_backend, logic);
+        let rasterizer = rasterizer::TestRasterizer::new(wgpu_backend, &logic.play);
+        let ray_marcher = ray_marcher::TestRayMarcher::new(wgpu_backend, &logic.play);
 
         return Self {
             rasterizer,
@@ -32,12 +37,12 @@ impl Renderer {
     }
 
     pub fn update(&mut self, wgpu_backend: &WGPUBackend, logic: &Logic) {
-        self.rasterizer.update(wgpu_backend, logic);
-        self.ray_marcher.update(wgpu_backend, logic);
+        self.rasterizer.update(wgpu_backend, &logic.play);
+        self.ray_marcher.update(wgpu_backend, &logic.play);
     }
 
     pub fn process_resize(&mut self, wgpu_backend: &WGPUBackend, logic: &Logic) {
-        self.ray_marcher.process_resize(wgpu_backend, logic);
+        self.ray_marcher.process_resize(wgpu_backend, &logic.play);
     }
 
     pub fn render(&self, wgpu_backend: &WGPUBackend, logic: &Logic) {
@@ -68,10 +73,15 @@ impl Renderer {
                 occlusion_query_set: None,
             });
 
-            if logic.scene == crate::logic::Scene::TestRasterizer {
-                self.rasterizer.render(&mut pass);
-            } else {
-                self.ray_marcher.render(&mut pass);
+            match logic.state {
+                LogicState::Playing => {
+                    if logic.play.pipeline == PipelineType::TestRasterizer {
+                        self.rasterizer.render(&mut pass);
+                    } else {
+                        self.ray_marcher.render(&mut pass);
+                    }
+                },
+                LogicState::Menu => {},
             }
         }
 

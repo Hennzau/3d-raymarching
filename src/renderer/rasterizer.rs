@@ -2,7 +2,7 @@ use wgpu::util::DeviceExt;
 
 use crate::{
     WGPUBackend,
-    logic::Logic,
+    logic::play::Play,
     renderer::{
         pipeline,
         pipeline::ColorVertex
@@ -22,10 +22,10 @@ pub struct TestRasterizer {
 }
 
 impl TestRasterizer {
-    pub fn new(wgpu_backend: &WGPUBackend, logic: &Logic) -> Self {
+    pub fn new(wgpu_backend: &WGPUBackend, play: &Play) -> Self {
         let pipeline = pipeline::ColorPipeline::new(wgpu_backend);
 
-        let projection_view_model_data = logic.camera.build_projection_view_matrix(wgpu_backend.config.width as f32 / wgpu_backend.config.height as f32);
+        let projection_view_model_data = play.camera.build_projection_view_matrix(wgpu_backend.config.width as f32 / wgpu_backend.config.height as f32);
         let projection_view_model_ref: &[f32; 16] = projection_view_model_data.as_ref();
         let projection_view_model_buffer = wgpu_backend.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
@@ -87,8 +87,8 @@ impl TestRasterizer {
         pass.draw_indexed(0..self.num_indices, 0, 0..1);
     }
 
-    pub fn update(&mut self, wgpu_backend: &WGPUBackend, logic: &Logic) {
-        let projection_view_model_data = logic.camera.build_projection_view_matrix(wgpu_backend.config.width as f32 / wgpu_backend.config.height as f32);
+    pub fn update(&mut self, wgpu_backend: &WGPUBackend, play: &Play) {
+        let projection_view_model_data = play.camera.build_projection_view_matrix(wgpu_backend.config.width as f32 / wgpu_backend.config.height as f32);
         let projection_view_model_ref: &[f32; 16] = projection_view_model_data.as_ref();
 
         wgpu_backend.queue.write_buffer(&self.projection_view_model_buffer, 0, bytemuck::cast_slice(projection_view_model_ref));

@@ -1,4 +1,7 @@
-use std::f32::consts::{FRAC_PI_2, PI};
+use std::f32::consts::{
+    FRAC_PI_2,
+    PI
+};
 
 use glam::{
     Mat4,

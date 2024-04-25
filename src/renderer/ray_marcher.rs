@@ -2,7 +2,7 @@ use wgpu::util::DeviceExt;
 
 use crate::{
     WGPUBackend,
-    logic::Logic,
+    logic::play::Play,
     renderer::{
         pipeline,
         pipeline::SimpleVertex
@@ -26,10 +26,10 @@ pub struct TestRayMarcher {
 }
 
 impl TestRayMarcher {
-    pub fn new(wgpu_backend: &WGPUBackend, logic: &Logic) -> Self {
+    pub fn new(wgpu_backend: &WGPUBackend, play: &Play) -> Self {
         let pipeline = pipeline::RayMarchingPipeline::new(wgpu_backend);
 
-        let camera_position_data = logic.camera.position;
+        let camera_position_data = play.camera.position;
         let camera_position_ref: &[f32; 3] = camera_position_data.as_ref();
         let camera_position_buffer = wgpu_backend.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
@@ -37,7 +37,7 @@ impl TestRayMarcher {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
-        let camera_inverted_projection_data = logic.camera.get_inverted_projection_matrix(wgpu_backend.config.width as f32 / wgpu_backend.config.height as f32);
+        let camera_inverted_projection_data = play.camera.get_inverted_projection_matrix(wgpu_backend.config.width as f32 / wgpu_backend.config.height as f32);
         let camera_inverted_projection_ref: &[f32; 16] = camera_inverted_projection_data.as_ref();
         let camera_inverted_projection_buffer = wgpu_backend.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
@@ -45,7 +45,7 @@ impl TestRayMarcher {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
-        let camera_inverted_view_data = logic.camera.get_inverted_view_matrix();
+        let camera_inverted_view_data = play.camera.get_inverted_view_matrix();
         let camera_inverted_view_ref: &[f32; 16] = camera_inverted_view_data.as_ref();
         let camera_inverted_view_buffer = wgpu_backend.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
@@ -120,23 +120,23 @@ impl TestRayMarcher {
         };
     }
 
-    pub fn update(&mut self, wgpu_backend: &WGPUBackend, logic: &Logic) {
-        let camera_position_data = logic.camera.position;
+    pub fn update(&mut self, wgpu_backend: &WGPUBackend, play: &Play) {
+        let camera_position_data = play.camera.position;
         let camera_position_ref: &[f32; 3] = camera_position_data.as_ref();
 
         wgpu_backend.queue.write_buffer(&self.camera_position_buffer, 0, bytemuck::cast_slice(camera_position_ref));
 
-        let camera_inverted_view_data = logic.camera.get_inverted_view_matrix();
+        let camera_inverted_view_data = play.camera.get_inverted_view_matrix();
         let camera_inverted_view_ref: &[f32; 16] = camera_inverted_view_data.as_ref();
 
         wgpu_backend.queue.write_buffer(&self.camera_inverted_view_buffer, 0, bytemuck::cast_slice(camera_inverted_view_ref));
     }
 
-    pub fn process_resize(&mut self, wgpu_backend: &WGPUBackend, logic: &Logic) {
+    pub fn process_resize(&mut self, wgpu_backend: &WGPUBackend, play: &Play) {
         let surface_configuration_data = [wgpu_backend.config.width as f32, wgpu_backend.config.height as f32];
         wgpu_backend.queue.write_buffer(&self.surface_configuration_buffer, 0, bytemuck::cast_slice(surface_configuration_data.as_ref()));
 
-        let camera_inverted_projection_data = logic.camera.get_inverted_projection_matrix(wgpu_backend.config.width as f32 / wgpu_backend.config.height as f32);
+        let camera_inverted_projection_data = play.camera.get_inverted_projection_matrix(wgpu_backend.config.width as f32 / wgpu_backend.config.height as f32);
         let camera_inverted_projection_ref: &[f32; 16] = camera_inverted_projection_data.as_ref();
 
         wgpu_backend.queue.write_buffer(&self.camera_inverted_projection_buffer, 0, bytemuck::cast_slice(camera_inverted_projection_ref));

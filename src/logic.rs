@@ -1,137 +1,84 @@
-use std::f32::consts::FRAC_PI_2;
-
-use glam::Vec3;
-
 use winit::{
-    window::{
-        Window,
-        CursorGrabMode,
-    },
+    window::Window,
     event::{
         ElementState,
         KeyEvent,
         MouseButton,
     },
-    keyboard::{
-        KeyCode,
-        PhysicalKey,
-    },
 };
 
-use crate::logic::camera::{
-    Camera,
-    CameraController,
+use crate::logic::{
+    menu::Menu,
+    play::Play
 };
 
 pub mod camera;
+pub mod play;
+pub mod menu;
 
 #[derive(PartialEq)]
-pub enum State {
+pub enum LogicState {
     Playing,
-    Pause,
-}
-
-#[derive(PartialEq)]
-pub enum Scene {
-    TestRasterizer,
-    TestRayMarcher,
+    Menu,
 }
 
 pub struct Logic {
-    pub camera: Camera,
-    pub controller: CameraController,
+    pub state: LogicState,
 
-    pub state: State,
-    pub scene: Scene,
+    pub play: Play,
+    pub menu: Menu,
 }
 
 impl Logic {
     pub fn new() -> Self {
         return Self {
-            camera: Camera::new(),
-            controller: CameraController::new(),
-            state: State::Pause,
-            scene: Scene::TestRayMarcher,
+            state: LogicState::Playing,
+            play: Play::new(),
+            menu: Menu::new(),
         };
     }
 
     pub fn process_keyboard(&mut self, window: &Window, key_event: KeyEvent) {
-        match key_event {
-            KeyEvent {
-                physical_key,
-                state,
-                ..
-            } => {
-                match physical_key {
-                    PhysicalKey::Code(KeyCode::Escape) => {
-                        if state == ElementState::Pressed {
-                            window.set_cursor_grab(CursorGrabMode::None).expect("Failed to set cursor grab mode");
-                            window.set_cursor_visible(true);
-                            self.state = State::Pause;
-                        }
-                    }
-                    PhysicalKey::Code(KeyCode::KeyE) => {
-                        if state == ElementState::Pressed {
-                            self.scene = Scene::TestRasterizer;
-                            self.camera.position = Vec3::new(0f32, -3f32, 0f32);
-                            self.camera.rotation = Vec3::new(FRAC_PI_2, 0f32, 0f32);
-                        }
-                    }
-                    PhysicalKey::Code(KeyCode::KeyR) => {
-                        if state == ElementState::Pressed {
-                            self.scene = Scene::TestRayMarcher;
-                            self.camera.position = Vec3::new(0f32, -3f32, 0f32);
-                            self.camera.rotation = Vec3::new(FRAC_PI_2, 0f32, 0f32);
-                        }
-                    }
-                    PhysicalKey::Code(KeyCode::Enter) => {
-                        self.camera.position = Vec3::new(0f32, -3f32, 0f32);
-                        self.camera.rotation = Vec3::new(FRAC_PI_2, 0f32, 0f32);
-                    }
-                    _ => {}
-                }
+        match self.state {
+            LogicState::Playing => {
+                self.play.process_keyboard(window, key_event);
+            }
+            LogicState::Menu => {
+                self.menu.process_keyboard(window, key_event);
             }
         }
-
-        self.controller.process_keyboard(key_event);
-    }
-
-    #[cfg(target_os = "windows")]
-    fn grab_cursor(window: &Window) {
-        window.set_cursor_grab(CursorGrabMode::Confined).expect("Failed to set cursor grab mode");
-    }
-
-    #[cfg(target_os = "macos")]
-    fn grab_cursor(window: &Window) {
-        window.set_cursor_grab(CursorGrabMode::Locked).expect("Failed to set cursor grab mode");
     }
 
     pub fn process_mouse_input(&mut self, window: &Window, state: ElementState, mouse_button: MouseButton) {
-        match mouse_button {
-            MouseButton::Left => {
-                if state == ElementState::Pressed {
-                    Self::grab_cursor(window);
-                    window.set_cursor_visible(false);
-                    self.state = State::Playing;
-                }
+        match self.state {
+            LogicState::Playing => {
+                self.play.process_mouse_input(window, state, mouse_button);
             }
-            MouseButton::Right => {}
-            MouseButton::Middle => {}
-            MouseButton::Back => {}
-            MouseButton::Forward => {}
-            MouseButton::Other(_) => {}
+            LogicState::Menu => {
+                self.menu.process_mouse_input(window, state, mouse_button);
+            }
         }
     }
 
     pub fn process_mouse_motion(&mut self, delta: (f32, f32)) {
-        if self.state == State::Playing {
-            self.controller.process_mouse_motion(delta);
+        match self.state {
+            LogicState::Playing => {
+                self.play.process_mouse_motion(delta);
+            }
+            LogicState::Menu => {
+                self.menu.process_mouse_motion(delta);
+            }
         }
     }
 
     pub fn update(&mut self, delta_time: f32) {
-        if self.state == State::Playing {
-            self.controller.update(delta_time, &mut self.camera);
+        match self.state {
+            LogicState::Playing => {
+                self.play.update(delta_time);
+            }
+            LogicState::Menu => {
+                self.menu.update(delta_time);
+            }
         }
     }
 }
